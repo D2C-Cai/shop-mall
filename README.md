@@ -5,9 +5,9 @@
 　　【赋能店铺】服务端源码，低配版微店，（B端，C端，管理端）三端合一　<br>
 
    <div style="width:100%"> 
-   <img src="https://github.com/D2C-Cai/shop/blob/master/doc/1.png" width="280" alt="介绍1.png" style="float:left"/>
-   <img src="https://github.com/D2C-Cai/shop/blob/master/doc/2.png" width="280" alt="介绍2.png" style="float:left"/>
-   <img src="https://github.com/D2C-Cai/shop/blob/master/doc/3.png" width="280" alt="介绍3.png" style="float:left"/>
+   <img src="https://github.com/D2C-Cai/shop-mall/blob/master/doc/1.png" width="280" alt="介绍1.png" style="float:left"/>
+   <img src="https://github.com/D2C-Cai/shop-mall/blob/master/doc/2.png" width="280" alt="介绍2.png" style="float:left"/>
+   <img src="https://github.com/D2C-Cai/shop-mall/blob/master/doc/3.png" width="280" alt="介绍3.png" style="float:left"/>
    </div>
    
 ## 背景介绍
