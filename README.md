@@ -2,7 +2,9 @@
       
 　　SpringBoot（2.0.5）+MybatisPlus（3.0.7）项目骨架，支持SpringSecurity+JWT权限验证，整合Redis+MongoDB+RabbitMQ+Elasticseach，Quartz定时任务，EasyPoi的Excel导出，Swagger2接口文档，工具包Lombok/FastJson/Hutool/Jasypt<br>
 　　作者QQ：[709931138]() 作者邮箱：[709931138@qq.com]() <br>
-　　【赋能店铺】服务端源码，低配版微店，（B端，C端，管理端）三端合一　<br>
+　　具体分布式参见：https://github.com/D2C-Cai/mall 支持平滑分布式改造<br>
+
+#### 【赋能店铺】服务端源码，低配版微店，（B端，C端，管理端）三端合一
 
    <div style="width:100%"> 
    <img src="https://github.com/D2C-Cai/shop-mall/blob/master/doc/1.png" width="280" alt="介绍1.png" style="float:left"/>
