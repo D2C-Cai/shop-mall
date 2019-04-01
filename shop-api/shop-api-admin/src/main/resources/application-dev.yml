@@ -1,0 +1,30 @@
+server:
+  port: 8030
+  tomcat:
+    uri-encoding: UTF-8
+    max-threads: 1000
+    min-spare-threads: 30
+
+# spring
+spring:
+  profiles:
+    include: service-dev
+
+# ignored-urls
+ignored:
+  urls:
+    - /back/user/expired
+    - /back/user/insert
+    - /swagger-ui.html
+    - /swagger-resources/**
+    - /swagger/**
+    - /**/v2/api-docs
+    - /**/*.js
+    - /**/*.css
+    - /**/*.png
+    - /**/*.ico
+
+#logging:
+#  level:
+#    root: debug
+

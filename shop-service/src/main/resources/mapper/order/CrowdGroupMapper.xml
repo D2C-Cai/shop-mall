@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.d2c.shop.service.modules.order.mapper.CrowdGroupMapper">
+    <resultMap id="baseMap" type="com.d2c.shop.service.modules.order.model.CrowdGroupDO">
+
+    </resultMap>
+
+    <update id="doAttend">
+        UPDATE O_CROWD_GROUP
+        SET attend_num=attend_num + 1, avatars=#{avatars}, modify_date=now()
+        WHERE id = #{id}
+        AND attend_num &lt; crowd_num
+    </update>
+
+    <update id="doCancel">
+        UPDATE O_CROWD_GROUP
+        SET attend_num=attend_num - 1, avatars=#{avatars}, modify_date=now()
+        WHERE id = #{id}
+        AND attend_num &gt; 0
+    </update>
+
+</mapper>

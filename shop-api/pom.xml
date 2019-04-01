@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.d2c</groupId>
+    <artifactId>shop-api</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>shop-api-admin</module>
+        <module>shop-api-business</module>
+        <module>shop-api-customer</module>
+    </modules>
+
+    <parent>
+        <groupId>com.d2c</groupId>
+        <artifactId>shop-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+</project>

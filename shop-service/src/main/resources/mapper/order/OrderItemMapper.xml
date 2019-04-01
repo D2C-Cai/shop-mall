@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.d2c.shop.service.modules.order.mapper.OrderItemMapper">
+    <resultMap id="baseMap" type="com.d2c.shop.service.modules.order.model.OrderItemDO">
+
+    </resultMap>
+
+    <select id="countDaily" resultType="HashMap">
+        SELECT
+        COALESCE(SUM(quantity), 0) as quantityCount
+        FROM O_ORDER_ITEM
+        WHERE shop_id = #{query.shopId}
+        <if test="query.status != null">
+            AND status IN
+            <foreach collection="query.status" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="query.createDateL != null">
+            AND create_date &gt;= #{query.createDateL}
+        </if>
+        <if test="query.createDateR != null">
+            AND create_date &lt;= #{query.createDateR}
+        </if>
+    </select>
+
+</mapper>

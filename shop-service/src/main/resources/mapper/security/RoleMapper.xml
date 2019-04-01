@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.d2c.shop.service.modules.security.mapper.RoleMapper">
+    <resultMap id="baseMap" type="com.d2c.shop.service.modules.security.model.RoleDO">
+
+    </resultMap>
+
+    <select id="findByUserId" resultMap="baseMap">
+        SELECT r.*
+        FROM SYS_USER_ROLE ur
+        LEFT JOIN SYS_ROLE r
+        ON ur.role_id = r.id
+        WHERE user_id = #{userId}
+    </select>
+
+    <select id="findByMenuId" resultMap="baseMap">
+        SELECT r.*
+        FROM SYS_ROLE_MENU rm
+        LEFT JOIN SYS_ROLE r
+        ON rm.role_id = r.id
+        WHERE menu_id = #{menuId}
+    </select>
+
+</mapper>

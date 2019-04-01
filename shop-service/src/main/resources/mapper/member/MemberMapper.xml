@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.d2c.shop.service.modules.member.mapper.MemberMapper">
+    <resultMap id="baseMap" type="com.d2c.shop.service.modules.member.model.MemberDO">
+
+    </resultMap>
+
+    <update id="doConsume">
+        UPDATE M_MEMBER
+        SET consume_times=consume_times + 1, consume_amount=consume_amount + #{amount}, modify_date=now()
+        WHERE id = #{id}
+    </update>
+
+</mapper>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.d2c.shop.service.modules.order.mapper.OrderMapper">
+    <resultMap id="baseMap" type="com.d2c.shop.service.modules.order.model.OrderDO">
+
+    </resultMap>
+
+    <select id="countDaily" resultType="HashMap">
+        SELECT
+        COUNT(id) as orderCount,
+        COUNT(DISTINCT member_id) as memberCount,
+        COALESCE(SUM(pay_amount), 0) as paidAmount
+        FROM O_ORDER
+        WHERE shop_id = #{query.shopId}
+        <if test="query.status != null">
+            AND status = #{query.status}
+        </if>
+        <if test="query.createDateL != null">
+            AND create_date &gt;= #{query.createDateL}
+        </if>
+        <if test="query.createDateR != null">
+            AND create_date &lt;= #{query.createDateR}
+        </if>
+    </select>
+
+</mapper>

@@ -1,0 +1,16 @@
+server:
+  port: 8008
+  tomcat:
+    uri-encoding: UTF-8
+    max-threads: 1000
+    min-spare-threads: 30
+
+# spring
+spring:
+  profiles:
+    include: service-dev
+
+#logging:
+#  level:
+#    root: debug
+

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.d2c.shop.service.modules.product.mapper.ProductMapper">
+    <resultMap id="baseMap" type="com.d2c.shop.service.modules.product.model.ProductDO">
+
+    </resultMap>
+
+    <update id="doDeductStock">
+        UPDATE P_PRODUCT
+        SET stock = stock - #{quantity}, modify_date=now()
+        WHERE id = #{id}
+    </update>
+
+    <update id="doReturnStock">
+        UPDATE P_PRODUCT
+        SET stock = stock + #{quantity}, modify_date=now()
+        WHERE id = #{id}
+    </update>
+
+</mapper>

@@ -1,0 +1,36 @@
+server:
+  port: 8001
+  tomcat:
+    uri-encoding: UTF-8
+    max-threads: 1000
+    min-spare-threads: 30
+
+# spring
+spring:
+  profiles:
+    include: service-dev
+
+# shop-sdk
+shop:
+  oauth:
+    wechat:
+      app-id: ENC(a2ZeusX9S6KNg8f8XmPcvjDyPDWRuErLEyoBRUvc8Qo=)
+      app-secret: ENC(1oycGoLbAUBYGUjLeKHZxqp7faBcRsbXLtLs1bMAsxygbygG7nWvoMRW67dVLNfa)
+  pay:
+    wxpay:
+      app-id: ENC(a2ZeusX9S6KNg8f8XmPcvjDyPDWRuErLEyoBRUvc8Qo=)
+      mch-id: ENC(X/yHehQ1afaGNPo0n8s41MJ6a59Q3fRM)
+      secret-key: ENC(+H0uPPJVd3fakakqjd9LXk1jNAL9gmAZOtZGYhNKwiwAHnD2oJWNV72CtzV4rRlE)
+      notify-url: http://shop.d2c.cn/c_api/callback/wx_pay
+    alipay:
+      app-id: ENC(I6Tso2NeCtAvDyjnIjNEbpFLHPExFHiOxab0PjWYiyo=)
+      private-key: ENC(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)
+      public-key: ENC(Gff8FEZSY62KGowC+wHmA9jIvn7FTE2r2d8rVKCyf3BMZX5WY/JlnOytEbGmvWhs80rdOPx4GfBqOjAZFBWRlFPW5XN2XvrExAdazLCIwP3Kv4LhXwFezEJdH1WR3jvVQs8iy3RhG6bPmD5/xWemvT3Va39oF4sQfqMWCTAv7lXKPup2DPgeYrEcdn+IV6eX/ub1YeCnZFDFMIW/asD82UmsZCzfiVEOXTW/Y3iD70OhKCsi88yrTohJnE50zBuF4G3OesKyigGThwFweCXBevP1YJVroOwAOX4Znt8cEA02+NcDSSawwi6/Q8LSxWpaJvbBe5HBpD9ujdc7Zi8WYLvq5LUrgk8wo6Lw95Df30AZxowYJKI3jubsGEZAvIwNcKrVd3K74rOJCNQmEZKA2huGFb5FBvEqG43xOklsahwwfSgkAuMYQ4H+0QztyLexyH+xXk+JLSO9oXnvPj2GJwDX2kUN77zsijyvYWnW9UWgC+rxxSKNMLk0Gm5pWOpx5NRadNAvct2Mpzs3BGku4O1IK4eW9Kzr)
+      api-url: https://openapi.alipaydev.com/gateway.do
+      return-url1: http://shop.d2c.cn/order/detail/
+      return-url2: http://shop.d2c.cn/group/
+      notify-url: http://shop.d2c.cn/c_api/callback/ali_pay
+
+#logging:
+#  level:
+#    root: debug

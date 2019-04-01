@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.d2c.shop.service.modules.security.mapper.MenuMapper">
+    <resultMap id="baseMap" type="com.d2c.shop.service.modules.security.model.MenuDO">
+
+    </resultMap>
+
+    <select id="findByRoleId" resultMap="baseMap">
+        SELECT m.*
+        FROM SYS_ROLE_MENU rm
+        LEFT JOIN SYS_MENU m
+        ON rm.menu_id = m.id
+        WHERE rm.role_id IN
+        <foreach collection="roleIds" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        GROUP BY m.id
+        ORDER BY m.sort DESC, m.create_date DESC
+    </select>
+
+</mapper>
