@@ -1,5 +1,8 @@
 # SpringBoot（2.0.5）+MybatisPlus（3.0.7）项目骨架
-      
+
+   [![LICENSE](https://img.shields.io/badge/license-Anti%20996-blue.svg)](https://github.com/996icu/996.ICU/blob/master/LICENSE)
+   [![Badge](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu/#/zh_CN)
+   
 　　SpringBoot（2.0.5）+MybatisPlus（3.0.7）项目骨架，支持SpringSecurity+JWT权限验证，整合Redis+MongoDB+RabbitMQ+Elasticseach，Quartz定时任务，EasyPoi的Excel导出，Swagger2接口文档，工具包Lombok/FastJson/Hutool/Jasypt<br>
 　　作者QQ：[709931138]() 作者邮箱：[709931138@qq.com]() <br>
 　　具体分布式参见：https://github.com/D2C-Cai/mall 支持平滑分布式改造<br>
@@ -1529,3 +1532,15 @@ BigExcelConstants.DATA_INTER这个是具体实现IExcelExportServer类的对象�
 ## 后续版本持续开发
 
 由于上线时间比较紧，很多功能都不是很完全，后续最紧急是加入商品搜索es的代码和订单商品活动以及供应链这些功能，如业务发展势头良好，则项目会改造为mall类似的分布式结构...
+
+License
+---
+
+[反 996 许可证](LICENSE)
+
+ - 此许可证的目的是阻止违反劳动法的公司使用许可证下的软件或代码，并强迫这些公司权衡他们的行为。
+ - 在此处查看反 996 许可证下的[完整项目列表](awesomelist/projects.md)
+ - 此许可证的灵感来源于 @xushunke：[Design A Software License Of Labor Protection -- 996ICU License](https://github.com/996icu/996.ICU/pull/15642)
+ - 当前版本反 996 许可证由 [伊利诺伊大学法学院的 Katt Gu, J.D](https://scholar.google.com.sg/citations?user=PTcpQwcAAAAJ&hl=en&oi=ao) 起草；由 [Dimension](https://www.dimension.im) 的首席执行官 [Suji Yan](https://www.linkedin.com/in/tedkoyan/) 提供建议。
+ - 该草案改编自 MIT 许可证，如需更多信息请查看 [Wiki](https://github.com/kattgu7/996-License-Draft/wiki)。此许可证旨在与所有主流开源许可证兼容。
+ - 如果你是法律专业人士，或是任何愿意为未来版本做出直接贡献的人，请访问 [Anti-996-License-1.0](https://github.com/kattgu7/996-License-Draft)。感谢你的帮助。
