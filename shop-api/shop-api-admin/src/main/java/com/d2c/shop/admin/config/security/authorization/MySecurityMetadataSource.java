@@ -35,7 +35,7 @@ public class MySecurityMetadataSource implements FilterInvocationSecurityMetadat
 
     @PostConstruct
     public void loadDataSource() {
-        map = new ConcurrentHashMap<>();
+        map = new TreeMap<String, Collection<ConfigAttribute>>((o1, o2) -> o2.compareTo(o1));
         List<MenuDO> menus = menuService.list();
         for (MenuDO menu : menus) {
             List<RoleDO> roles = roleService.findByMenuId(menu.getId());
