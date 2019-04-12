@@ -10,4 +10,6 @@ public interface MemberCouponService extends IService<MemberCouponDO> {
 
     MemberCouponDO doReceive(MemberCouponDO memberCoupon);
 
+    MemberCouponDO doSend(MemberCouponDO memberCoupon);
+
 }

@@ -1,5 +1,6 @@
 package com.d2c.shop.service.modules.order.service.impl;
 
+import cn.hutool.core.date.DateUtil;
 import com.baomidou.mybatisplus.extension.exceptions.ApiException;
 import com.d2c.shop.service.common.api.base.BaseService;
 import com.d2c.shop.service.common.utils.ExecutorUtil;
@@ -24,12 +25,17 @@ import com.d2c.shop.service.modules.order.service.CrowdGroupService;
 import com.d2c.shop.service.modules.order.service.OrderItemService;
 import com.d2c.shop.service.modules.order.service.OrderService;
 import com.d2c.shop.service.modules.order.service.PaymentService;
+import com.d2c.shop.service.modules.product.model.CouponDO;
+import com.d2c.shop.service.modules.product.model.ProductDO;
+import com.d2c.shop.service.modules.product.service.CouponService;
+import com.d2c.shop.service.modules.product.service.ProductService;
 import com.d2c.shop.service.modules.product.service.ProductSkuService;
 import com.d2c.shop.service.rabbitmq.sender.OrderDelayedSender;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -46,11 +52,15 @@ public class OrderServiceImpl extends BaseService<OrderMapper, OrderDO> implemen
     @Autowired
     private PaymentService paymentService;
     @Autowired
+    private ProductService productService;
+    @Autowired
     private ProductSkuService productSkuService;
     @Autowired
     private CrowdGroupService crowdGroupService;
     @Autowired
     private MemberService memberService;
+    @Autowired
+    private CouponService couponService;
     @Autowired
     private MemberCouponService memberCouponService;
     @Autowired
@@ -156,16 +166,18 @@ public class OrderServiceImpl extends BaseService<OrderMapper, OrderDO> implemen
         success &= paymentService.update(p, QueryUtil.buildWrapper(pq));
         // 拼团业务处理
         if (order.getCrowdId() != null && order.getCrowdId() > 0) {
-            CrowdGroupDO cg = crowdGroupService.getById(order.getCrowdId());
+            CrowdGroupDO crowdGroup = crowdGroupService.getById(order.getCrowdId());
             CrowdGroupDO entity = new CrowdGroupDO();
-            entity.setId(cg.getId());
-            entity.setPaidNum(cg.getPaidNum() + 1);
-            if (cg.getCrowdNum() == cg.getPaidNum() + 1) {
+            entity.setId(crowdGroup.getId());
+            entity.setPaidNum(crowdGroup.getPaidNum() + 1);
+            if (crowdGroup.getCrowdNum() == crowdGroup.getPaidNum() + 1) {
                 entity.setStatus(1);
                 OrderItemDO noi = new OrderItemDO();
-                if (cg.getVirtual() == 1) {
+                if (crowdGroup.getVirtual() == 1) {
                     // 虚拟商品明细状态-已发货
                     noi.setStatus(OrderItemDO.StatusEnum.DELIVERED.name());
+                    // 发放拼团优惠券
+                    this.sendCrowdCoupon(crowdGroup);
                 } else {
                     // 普通商品明细状态-待发货
                     noi.setStatus(OrderItemDO.StatusEnum.WAIT_DELIVER.name());
@@ -177,30 +189,65 @@ public class OrderServiceImpl extends BaseService<OrderMapper, OrderDO> implemen
             crowdGroupService.updateById(entity);
         }
         ExecutorUtil.fixedPool.submit(() -> {
-                    // 会员消费统计
-                    memberService.doConsume(order.getMemberId(), order.getMemberAccount(), order.getPayAmount());
-                    // 会员归属门店
-                    MemberShopDO ms = new MemberShopDO();
-                    ms.setShopId(order.getShopId());
-                    ms.setMemberId(order.getMemberId());
-                    MemberShopQuery msq = new MemberShopQuery();
-                    msq.setShopId(order.getShopId());
-                    msq.setMemberId(order.getMemberId());
-                    memberShopService.remove(QueryUtil.buildWrapper(msq));
-                    memberShopService.save(ms);
-                    // 门店订单收入
-                    ShopFlowDO sf = new ShopFlowDO();
-                    sf.setStatus(1);
-                    sf.setType(ShopFlowDO.TypeEnum.ORDER.name());
-                    sf.setShopId(order.getShopId());
-                    sf.setOrderSn(order.getSn());
-                    sf.setPaymentType(paymentType.name());
-                    sf.setPaymentSn(paymentSn);
-                    sf.setAmount(order.getPayAmount());
-                    shopFlowService.doFlowing(sf);
+                    // 最后统计消费
+                    this.statisticConsumption(order, paymentType, paymentSn);
                 }
         );
         return success;
+    }
+
+    // 发放拼团优惠券
+    private void sendCrowdCoupon(CrowdGroupDO crowdGroup) {
+        ProductDO product = productService.getById(crowdGroup.getProductId());
+        CouponDO coupon = couponService.getById(product.getCouponId());
+        if (coupon != null) {
+            OrderItemQuery noiq = new OrderItemQuery();
+            noiq.setCrowdId(crowdGroup.getId());
+            noiq.setStatus(new String[]{OrderItemDO.StatusEnum.PAID.name()});
+            List<OrderItemDO> oiList = orderItemService.list(QueryUtil.buildWrapper(noiq));
+            for (OrderItemDO item : oiList) {
+                MemberCouponDO memberCoupon = new MemberCouponDO();
+                memberCoupon.setMemberId(item.getMemberId());
+                memberCoupon.setCouponId(coupon.getId());
+                memberCoupon.setShopId(item.getShopId());
+                memberCoupon.setShopName(item.getShopName());
+                memberCoupon.setStatus(1);
+                Date serviceStartDate = coupon.getServiceStartDate();
+                Date serviceEndDate = coupon.getServiceEndDate();
+                if (coupon.getServiceSustain() != null && coupon.getServiceSustain() > 0) {
+                    serviceStartDate = new Date();
+                    serviceEndDate = DateUtil.offsetHour(serviceStartDate, coupon.getServiceSustain());
+                }
+                memberCoupon.setServiceStartDate(serviceStartDate);
+                memberCoupon.setServiceEndDate(serviceEndDate);
+                memberCouponService.doSend(memberCoupon);
+            }
+        }
+    }
+
+    // 最后统计消费
+    private void statisticConsumption(OrderDO order, PaymentDO.PaymentTypeEnum paymentType, String paymentSn) {
+        // 会员消费统计
+        memberService.doConsume(order.getMemberId(), order.getMemberAccount(), order.getPayAmount());
+        // 会员归属门店
+        MemberShopDO ms = new MemberShopDO();
+        ms.setShopId(order.getShopId());
+        ms.setMemberId(order.getMemberId());
+        MemberShopQuery msq = new MemberShopQuery();
+        msq.setShopId(order.getShopId());
+        msq.setMemberId(order.getMemberId());
+        memberShopService.remove(QueryUtil.buildWrapper(msq));
+        memberShopService.save(ms);
+        // 门店订单收入
+        ShopFlowDO sf = new ShopFlowDO();
+        sf.setStatus(1);
+        sf.setType(ShopFlowDO.TypeEnum.ORDER.name());
+        sf.setShopId(order.getShopId());
+        sf.setOrderSn(order.getSn());
+        sf.setPaymentType(paymentType.name());
+        sf.setPaymentSn(paymentSn);
+        sf.setAmount(order.getPayAmount());
+        shopFlowService.doFlowing(sf);
     }
 
     @Override

@@ -30,4 +30,12 @@ public class MemberCouponServiceImpl extends BaseService<MemberCouponMapper, Mem
         return memberCoupon;
     }
 
+    @Override
+    @Transactional
+    public MemberCouponDO doSend(MemberCouponDO memberCoupon) {
+        couponService.updateConsumption(memberCoupon.getCouponId());
+        this.save(memberCoupon);
+        return memberCoupon;
+    }
+
 }

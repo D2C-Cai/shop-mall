@@ -6,12 +6,18 @@ import com.d2c.shop.service.config.RabbitmqConfig;
 import com.d2c.shop.service.modules.logger.nosql.elasticsearch.document.MqErrorLog;
 import com.d2c.shop.service.modules.logger.nosql.elasticsearch.repository.MqErrorLogRepository;
 import com.d2c.shop.service.modules.member.model.DummyDO;
+import com.d2c.shop.service.modules.member.model.MemberCouponDO;
 import com.d2c.shop.service.modules.member.service.DummyService;
+import com.d2c.shop.service.modules.member.service.MemberCouponService;
 import com.d2c.shop.service.modules.order.model.CrowdGroupDO;
 import com.d2c.shop.service.modules.order.model.OrderItemDO;
 import com.d2c.shop.service.modules.order.query.OrderItemQuery;
 import com.d2c.shop.service.modules.order.service.CrowdGroupService;
 import com.d2c.shop.service.modules.order.service.OrderItemService;
+import com.d2c.shop.service.modules.product.model.CouponDO;
+import com.d2c.shop.service.modules.product.model.ProductDO;
+import com.d2c.shop.service.modules.product.service.CouponService;
+import com.d2c.shop.service.modules.product.service.ProductService;
 import com.d2c.shop.service.rabbitmq.sender.CrowdDelayedSender;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
@@ -33,6 +39,12 @@ public class CrowdDelayedReceiver {
 
     @Autowired
     private CrowdGroupService crowdGroupService;
+    @Autowired
+    private CouponService couponService;
+    @Autowired
+    private MemberCouponService memberCouponService;
+    @Autowired
+    private ProductService productService;
     @Autowired
     private OrderItemService orderItemService;
     @Autowired
@@ -95,6 +107,8 @@ public class CrowdDelayedReceiver {
             if (crowdGroup.getVirtual() == 1) {
                 // 虚拟商品明细状态-已发货
                 noi.setStatus(OrderItemDO.StatusEnum.DELIVERED.name());
+                // 发放拼团优惠券
+                this.sendCrowdCoupon(crowdGroup);
             } else {
                 // 普通商品明细状态-待发货
                 noi.setStatus(OrderItemDO.StatusEnum.WAIT_DELIVER.name());
@@ -103,6 +117,35 @@ public class CrowdDelayedReceiver {
             noiq.setCrowdId(crowdId);
             noiq.setStatus(new String[]{OrderItemDO.StatusEnum.PAID.name()});
             orderItemService.update(noi, QueryUtil.buildWrapper(noiq));
+        }
+    }
+
+    // 发放拼团优惠券
+    private void sendCrowdCoupon(CrowdGroupDO crowdGroup) {
+        ProductDO product = productService.getById(crowdGroup.getProductId());
+        CouponDO coupon = couponService.getById(product.getCouponId());
+        if (coupon != null) {
+            OrderItemQuery noiq = new OrderItemQuery();
+            noiq.setCrowdId(crowdGroup.getId());
+            noiq.setStatus(new String[]{OrderItemDO.StatusEnum.PAID.name()});
+            List<OrderItemDO> oiList = orderItemService.list(QueryUtil.buildWrapper(noiq));
+            for (OrderItemDO item : oiList) {
+                MemberCouponDO memberCoupon = new MemberCouponDO();
+                memberCoupon.setMemberId(item.getMemberId());
+                memberCoupon.setCouponId(coupon.getId());
+                memberCoupon.setShopId(item.getShopId());
+                memberCoupon.setShopName(item.getShopName());
+                memberCoupon.setStatus(1);
+                Date serviceStartDate = coupon.getServiceStartDate();
+                Date serviceEndDate = coupon.getServiceEndDate();
+                if (coupon.getServiceSustain() != null && coupon.getServiceSustain() > 0) {
+                    serviceStartDate = new Date();
+                    serviceEndDate = DateUtil.offsetHour(serviceStartDate, coupon.getServiceSustain());
+                }
+                memberCoupon.setServiceStartDate(serviceStartDate);
+                memberCoupon.setServiceEndDate(serviceEndDate);
+                memberCouponService.doSend(memberCoupon);
+            }
         }
     }
 

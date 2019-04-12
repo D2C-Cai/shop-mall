@@ -107,7 +107,7 @@ public class CouponController extends BaseController {
         Asserts.gt(coupon.getRestriction(), count, "优惠券每人限领" + coupon.getRestriction() + "张，不要贪心哦");
         Date serviceStartDate = coupon.getServiceStartDate();
         Date serviceEndDate = coupon.getServiceEndDate();
-        if (coupon.getServiceSustain() != null) {
+        if (coupon.getServiceSustain() != null && coupon.getServiceSustain() > 0) {
             serviceStartDate = new Date();
             serviceEndDate = DateUtil.offsetHour(serviceStartDate, coupon.getServiceSustain());
         }
