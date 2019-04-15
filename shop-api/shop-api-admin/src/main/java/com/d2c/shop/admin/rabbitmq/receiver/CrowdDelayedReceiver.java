@@ -105,8 +105,8 @@ public class CrowdDelayedReceiver {
             crowdGroupService.updateById(entity);
             OrderItemDO noi = new OrderItemDO();
             if (crowdGroup.getVirtual() == 1) {
-                // 虚拟商品明细状态-已发货
-                noi.setStatus(OrderItemDO.StatusEnum.DELIVERED.name());
+                // 虚拟商品明细状态-已收货
+                noi.setStatus(OrderItemDO.StatusEnum.RECEIVED.name());
                 // 发放拼团优惠券
                 this.sendCrowdCoupon(crowdGroup);
             } else {
