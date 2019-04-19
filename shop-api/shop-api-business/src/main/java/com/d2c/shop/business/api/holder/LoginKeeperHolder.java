@@ -16,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Date;
 
 /**
  * @author Cai
@@ -35,11 +36,17 @@ public class LoginKeeperHolder {
                     .parseClaimsJws(accessToken.replace(SecurityConstant.TOKEN_PREFIX, ""))
                     .getBody();
             String account = claims.getSubject();
+            // Redis获取用户session
             ShopkeeperDO keeper = SpringUtil.getBean(ShopkeeperService.class).findByAccount(account);
             Asserts.notNull(ResultCode.LOGIN_EXPIRED, keeper);
-            // Asserts.notNull(ResultCode.ACCESS_DENIED, keeper.getShopId());
+            // 验证token是否一致
             BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
             if (!encoder.matches(accessToken, keeper.getAccessToken())) {
+                throw new ApiException(ResultCode.LOGIN_EXPIRED);
+            }
+            // 验证token是否过期
+            Date expireDate = claims.getExpiration();
+            if (expireDate.before(keeper.getAccessExpired())) {
                 throw new ApiException(ResultCode.LOGIN_EXPIRED);
             }
             return keeper;

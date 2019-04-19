@@ -26,9 +26,9 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
-    private UserDetailsServiceImpl userDetailsService;
-    @Autowired
     private IgnoreUrlsConfig ignoreUrlsConfig;
+    @Autowired
+    private UserDetailsServiceImpl userDetailsService;
     @Autowired
     private AuthenticationSuccessHandler authenticationSuccessHandler;
     @Autowired
@@ -55,7 +55,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         registry.and()
                 // 表单登录方式
                 .formLogin()
-                .loginPage("/back/user/expired")
+                .loginPage("/login/expired")
                 .loginProcessingUrl("/back/user/login")
                 .permitAll()
                 .successHandler(authenticationSuccessHandler)
@@ -84,7 +84,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 // 自定义权限拦截器JWT过滤器
                 .and()
                 .addFilterBefore(myFilterSecurityInterceptor, FilterSecurityInterceptor.class)
-                .addFilter(new JWTAuthenticationFilter(authenticationManager()));
+                .addFilter(new JWTAuthenticationFilter(authenticationManager(), "/back/**", ignoreUrlsConfig.getUrls()));
     }
 
 }

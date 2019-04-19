@@ -1,6 +1,7 @@
 package com.d2c.shop.admin.config.security.authorization;
 
 import cn.hutool.core.util.StrUtil;
+import com.d2c.shop.admin.config.security.IgnoreUrlsConfig;
 import com.d2c.shop.service.modules.security.model.MenuDO;
 import com.d2c.shop.service.modules.security.model.RoleDO;
 import com.d2c.shop.service.modules.security.service.MenuService;
@@ -31,6 +32,8 @@ public class MySecurityMetadataSource implements FilterInvocationSecurityMetadat
     private MenuService menuService;
     @Autowired
     private RoleService roleService;
+    @Autowired
+    private IgnoreUrlsConfig ignoreUrls;
 
     @PostConstruct
     public void loadDataSource() {
@@ -60,6 +63,12 @@ public class MySecurityMetadataSource implements FilterInvocationSecurityMetadat
         if (map == null) this.loadDataSource();
         String url = ((FilterInvocation) o).getRequestUrl();
         PathMatcher pathMatcher = new AntPathMatcher();
+        // 白名单中的请求地址，返回空集合
+        for (String ignoreUrl : ignoreUrls.getUrls()) {
+            if (pathMatcher.match(ignoreUrl, url)) {
+                return null;
+            }
+        }
         Iterator<String> iterator = map.keySet().iterator();
         while (iterator.hasNext()) {
             String path = iterator.next();

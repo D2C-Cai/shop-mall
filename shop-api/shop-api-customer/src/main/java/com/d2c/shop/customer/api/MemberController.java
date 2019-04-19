@@ -118,7 +118,7 @@ public class MemberController extends BaseController {
         Asserts.eq(smsService.doCheck(account, code), true, "验证码不正确");
         Asserts.notNull("账号和密码不能为空", account, password);
         if (!Validator.isMobile(account)) {
-            Response.failed(ResultCode.FAILED, "手机号不符合规则");
+            return Response.failed(ResultCode.FAILED, "手机号不符合规则");
         }
         MemberDO old = memberService.findByAccount(account);
         Asserts.isNull("该账号已存在", old);
@@ -140,7 +140,7 @@ public class MemberController extends BaseController {
         Asserts.eq(smsService.doCheck(account, code), true, "验证码不正确");
         Asserts.notNull("手机号不能为空", account);
         if (!Validator.isMobile(account)) {
-            Response.failed(ResultCode.FAILED, "手机号不符合规则");
+            return Response.failed(ResultCode.FAILED, "手机号不符合规则");
         }
         MemberDO member = memberService.findByAccount(account);
         if (member == null) {

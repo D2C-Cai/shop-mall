@@ -109,7 +109,7 @@ public class ShopKeeperController extends BaseController {
         Asserts.eq(smsService.doCheck(account, code), true, "验证码不正确");
         Asserts.notNull("账号和密码不能为空", account, password);
         if (!Validator.isMobile(account)) {
-            Response.failed(ResultCode.FAILED, "手机号不符合规则");
+            return Response.failed(ResultCode.FAILED, "手机号不符合规则");
         }
         ShopkeeperDO old = shopkeeperService.findByAccount(account);
         Asserts.isNull("该账号已存在", old);
@@ -159,7 +159,7 @@ public class ShopKeeperController extends BaseController {
     public R<ShopkeeperDO> insert(@RequestBody ShopkeeperDO keeper) {
         Asserts.notNull("账号和密码不能为空", keeper.getAccount(), keeper.getPassword());
         if (!Validator.isMobile(keeper.getAccount())) {
-            Response.failed(ResultCode.FAILED, "手机号不符合规则");
+            return Response.failed(ResultCode.FAILED, "手机号不符合规则");
         }
         ShopkeeperDO old = shopkeeperService.findByAccount(keeper.getAccount());
         Asserts.isNull("该账号已存在", old);

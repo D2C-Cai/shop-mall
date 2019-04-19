@@ -1,4 +1,4 @@
-package com.d2c.shop.admin.config.security;
+package com.d2c.shop.admin.config.webmvc;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.format.FormatterRegistry;
@@ -10,7 +10,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * @author BaiCai
  */
 @Configuration
-public class WebMvcConfig implements WebMvcConfigurer {
+public class SpringMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {

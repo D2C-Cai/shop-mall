@@ -16,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Date;
 
 /**
  * @author Cai
@@ -35,10 +36,17 @@ public class LoginMemberHolder {
                     .parseClaimsJws(accessToken.replace(SecurityConstant.TOKEN_PREFIX, ""))
                     .getBody();
             String account = claims.getSubject();
+            // Redis获取用户session
             MemberDO member = SpringUtil.getBean(MemberService.class).findByAccount(account);
             Asserts.notNull(ResultCode.LOGIN_EXPIRED, member);
+            // 验证token是否一致
             BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
             if (!encoder.matches(accessToken, member.getAccessToken())) {
+                throw new ApiException(ResultCode.LOGIN_EXPIRED);
+            }
+            // 验证token是否过期
+            Date expireDate = claims.getExpiration();
+            if (expireDate.before(member.getAccessExpired())) {
                 throw new ApiException(ResultCode.LOGIN_EXPIRED);
             }
             return member;

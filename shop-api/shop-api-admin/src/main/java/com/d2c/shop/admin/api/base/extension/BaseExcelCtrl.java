@@ -38,7 +38,7 @@ public abstract class BaseExcelCtrl<E extends BaseDO, Q extends BaseQuery> exten
     public List<Object> selectListForExcelExport(Object o, int i) {
         Q query = (Q) o;
         Page page = new Page(i, PageModel.MAX_SIZE, false);
-        List<E> list = service.page(page, QueryUtil.buildWrapper(query)).getRecords();
+        List<E> list = service.page(page, QueryUtil.buildWrapper(query, false)).getRecords();
         List<Object> result = new ArrayList<>();
         result.addAll(list);
         return result;
