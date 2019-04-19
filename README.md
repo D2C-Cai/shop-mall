@@ -35,7 +35,7 @@
 | shop-api | 项目的接口层 |
 | shop-common | 项目的框架组件 |
 | shop-quartz | 项目的定时任务 |
-| shop-service | 项目的服务层 |
+| shop-service | 项目的服务层（可拆解） |
 | ---- | ---- |
 | shop-api | ---- |
 | shop-api-admin | 项目的管理api |
