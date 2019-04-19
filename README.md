@@ -217,16 +217,16 @@ https://github.com/medcl/elasticsearch-analysis-ik/releases 去这里下载一�
 # spring
 spring:
   datasource:
-    url: jdbc:mysql://192.168.0.146:3306/shop?useUnicode=true&characterEncoding=utf-8&useSSL=false
+    url: jdbc:mysql://192.168.0.146:3306/shop?useUnicode=true&characterEncoding=utf-8&useAffectedRows=true&useSSL=false
     username: root
-    password: ENC(LQi0FkhtShKQ3PZFfBwj6w==)
+    password: ENC(vx9OWLu20TlanLx53aj/Qg==)
     type: com.alibaba.druid.pool.DruidDataSource
     driverClassName: com.mysql.jdbc.Driver
     
 # mybatis-plus
 mybatis-plus:
-  mapper-locations: classpath:/mapper/*.xml
-  typeAliasesPackage: com.d2c.shop.modules.*.model
+  mapper-locations: classpath*:/mapper/**/*.xml
+  typeAliasesPackage: com.d2c.shop.service.modules.*.model
   global-config:
     db-config:
       id-type: id_worker
@@ -237,7 +237,8 @@ mybatis-plus:
   configuration:
     auto-mapping-behavior: partial
     map-underscore-to-camel-case: true
-    cache-enabled: false    
+    cache-enabled: false
+#   log-impl: org.apache.ibatis.logging.stdout.StdOutImpl    
 ```
 **解释：**
 上边给的配置中庸科学。具体更详细的配置建议大家参考官网文档：https://mp.baomidou.com/guide/
@@ -245,7 +246,7 @@ mybatis-plus:
 ```
 @Configuration
 @EnableTransactionManagement
-@MapperScan("com.d2c.shop.modules.*.mapper")
+@MapperScan("com.d2c.shop.service.modules.*.mapper")
 public class MybatisConfig {
 
     @Bean
@@ -394,7 +395,10 @@ public class UserDO extends BaseDelDO {
     @TableField(exist = false)
     @ApiModelProperty(value = "用户拥有的角色")
     private List<RoleDO> roles = new ArrayList<>();
-
+    @TableField(exist = false)
+    @ApiModelProperty(value = "用户拥有的菜单")
+    private List<MenuDO> menus = new ArrayList<>();
+    
     @JsonIgnore
     public String getPassword() {
         return password;
@@ -435,57 +439,46 @@ public abstract class BaseCtrl<E extends BaseDO, Q extends BaseQuery> {
 
     @ApiOperation(value = "新增数据")
     @RequestMapping(value = "/insert", method = RequestMethod.POST)
-    public R insert(@RequestBody E entity) {
-        Assert.notNull(ErrorCode.REQUEST_PARAM_NULL, entity);
-        boolean success = service.saveOrUpdate(entity);
-        if (!success) {
-            return Response.failed(ErrorCode.FAILED);
-        }
-        return Response.restResult(entity, ErrorCode.SUCCESS);
+    public R<E> insert(@RequestBody E entity) {
+        Asserts.notNull(ResultCode.REQUEST_PARAM_NULL, entity);
+        service.save(entity);
+        return Response.restResult(entity, ResultCode.SUCCESS);
     }
 
     @ApiOperation(value = "通过ID获取数据")
     @RequestMapping(value = "/select/{id}", method = RequestMethod.GET)
-    public R select(@PathVariable Long id) {
+    public R<E> select(@PathVariable Long id) {
         E entity = service.getById(id);
-        if (entity == null) {
-            return Response.failed(ErrorCode.RESPONSE_DATA_NULL);
-        }
-        return Response.restResult(entity, ErrorCode.SUCCESS);
+        Asserts.notNull(ResultCode.RESPONSE_DATA_NULL, entity);
+        return Response.restResult(entity, ResultCode.SUCCESS);
     }
 
     @ApiOperation(value = "通过ID更新数据")
     @RequestMapping(value = "/update", method = RequestMethod.POST)
-    public R update(@RequestBody E entity) {
-        Assert.notNull(ErrorCode.REQUEST_PARAM_NULL, entity);
-        boolean success = service.updateById(entity);
-        if (!success) {
-            return Response.failed(ErrorCode.FAILED);
-        }
-        return Response.restResult(null, ErrorCode.SUCCESS);
+    public R<E> update(@RequestBody E entity) {
+        Asserts.notNull(ResultCode.REQUEST_PARAM_NULL, entity);
+        service.updateById(entity);
+        return Response.restResult(service.getById(entity.getId()), ResultCode.SUCCESS);
     }
 
     @ApiOperation(value = "通过ID删除数据")
     @RequestMapping(value = "/delete", method = RequestMethod.POST)
     public R delete(Long[] ids) {
-        boolean success = service.removeByIds(CollUtil.toList(ids));
-        if (!success) {
-            return Response.failed(ErrorCode.FAILED);
-        }
-        return Response.restResult(null, ErrorCode.SUCCESS);
+        service.removeByIds(CollUtil.toList(ids));
+        return Response.restResult(null, ResultCode.SUCCESS);
     }
 
     @ApiOperation(value = "分页查询数据")
     @RequestMapping(value = "/select/page", method = RequestMethod.POST)
-    public R selectPage(PageModel page, Q query) {
-        Page<E> pager = (Page<E>) service.page(page, QueryUtil.buildWrapper(query));
-        return Response.restResult(pager, ErrorCode.SUCCESS);
+    public R<Page<E>> selectPage(PageModel page, Q query) {
+        Page<E> pager = (Page<E>) service.page(page, QueryUtil.buildWrapper(query, false));
+        return Response.restResult(pager, ResultCode.SUCCESS);
     }
 
 }
 ```
 ```
-public enum ErrorCode implements IErrorCode {
+public enum ResultCode implements IErrorCode {
     //
     SUCCESS(1, "操作成功"),
     FAILED(-1, "操作失败"),
@@ -498,7 +491,7 @@ public enum ErrorCode implements IErrorCode {
     private long code;
     private String msg;
 
-    private ErrorCode(long code, String msg) {
+    private ResultCode(long code, String msg) {
         this.code = code;
         this.msg = msg;
     }
@@ -516,7 +509,7 @@ public enum ErrorCode implements IErrorCode {
 ```
 ```
 @Slf4j
-public class Response extends R {
+public final class Response<T> extends R<T> {
 
     public static R failed(IErrorCode errorCode, String msg) {
         R result = failed(errorCode);
@@ -593,10 +586,20 @@ public class QueryUtil {
 
     // 构建QueryWrapper
     public static <T extends BaseQuery> QueryWrapper buildWrapper(T query) {
+        return buildWrapper(query, true);
+    }
+
+    // 构建QueryWrapper
+    public static <T extends BaseQuery> QueryWrapper buildWrapper(T query, boolean introspect) {
         QueryWrapper<Object> queryWrapper = new QueryWrapper();
-        for (Field field : getAllFields(query.getClass())) {
+        // 防止空查询参数
+        // 导致的全表查询
+        boolean empty = true;
+        for (Field field : this.getAllFields(query.getClass())) {
+            field.setAccessible(true);
             // 查询条件标签
             Condition annotation = field.getAnnotation(Condition.class);
+            if (annotation == null) continue;
             // 数据库查询字段
             String key = annotation.field();
             if (StrUtil.isBlank(key)) {
@@ -606,6 +609,9 @@ public class QueryUtil {
             Object value = null;
             try {
                 value = field.get(query);
+                if (value != null) {
+                    empty = false;
+                }
             } catch (IllegalAccessException e) {
                 break;
             }
@@ -615,7 +621,7 @@ public class QueryUtil {
             }
             // 数据库语句片段
             String sql = annotation.sql();
-            // 当搜索条件有值时
+            // 根据条件构造Wrapper
             switch (annotation.condition()) {
                 case EQ:
                     if (value != null) {
@@ -691,6 +697,7 @@ public class QueryUtil {
                     break;
             }
         }
+        if (introspect && empty) throw new ApiException("查询参数不可全部为空");
         return queryWrapper;
     }
 
@@ -729,7 +736,7 @@ public class QueryUtil {
 ```
 ```
 @Data
-public class PageModel extends Page {
+public class PageModel<T> extends Page<T> {
 
     @ApiModelProperty(value = "页码")
     private long p;
@@ -799,14 +806,8 @@ QueryUtil类专门构造一个QueryWrapper作为多重查询条件使用。
 ```
 @Api(description = "用户管理")
 @RestController
-@RequestMapping("/shop/user")
+@RequestMapping("/back/user")
 public class UserController extends BaseCtrl<UserDO, UserQuery> {
-
-    @ApiOperation(value = "登录过期")
-    @RequestMapping(value = "/expired", method = RequestMethod.GET)
-    public R expired() {
-        return Response.failed(ErrorCode.LOGIN_EXPIRED);
-    }
 
     /**
      * 方法签名一致，可覆盖不安全的insert
@@ -815,7 +816,7 @@ public class UserController extends BaseCtrl<UserDO, UserQuery> {
     @ApiOperation(value = "用户注册")
     @RequestMapping(value = "/insert", method = RequestMethod.POST)
     public R insert(@RequestBody UserDO user) {
-        Assert.notNull(ErrorCode.REQUEST_PARAM_NULL, user);
+        Assert.notNull(ResultCode.REQUEST_PARAM_NULL, user);
         user.setPassword(new BCryptPasswordEncoder().encode(user.getPassword()));
         return super.insert(user);
     }
@@ -827,7 +828,7 @@ public class UserController extends BaseCtrl<UserDO, UserQuery> {
     @ApiOperation(value = "用户更新")
     @RequestMapping(value = "/update", method = RequestMethod.POST)
     public R update(@RequestBody UserDO user) {
-        Assert.notNull(ErrorCode.REQUEST_PARAM_NULL, user);
+        Assert.notNull(ResultCode.REQUEST_PARAM_NULL, user);
         user.setUsername(null);
         user.setPassword(null);
         return super.update(user);
@@ -874,7 +875,10 @@ public class UserDO extends BaseDelDO {
     @TableField(exist = false)
     @ApiModelProperty(value = "用户拥有的角色")
     private List<RoleDO> roles = new ArrayList<>();
-
+    @TableField(exist = false)
+    @ApiModelProperty(value = "用户拥有的菜单")
+    private List<MenuDO> menus = new ArrayList<>();
+    
     @JsonIgnore
     public String getPassword() {
         return password;
@@ -1056,10 +1060,12 @@ public class MySecurityMetadataSource implements FilterInvocationSecurityMetadat
     private MenuService menuService;
     @Autowired
     private RoleService roleService;
-
+    @Autowired
+    private IgnoreUrlsConfig ignoreUrls;
+    
     @PostConstruct
     public void loadDataSource() {
-        map = new ConcurrentHashMap<>();
+         map = new TreeMap<String, Collection<ConfigAttribute>>((o1, o2) -> o2.compareTo(o1));
         List<MenuDO> menus = menuService.list();
         for (MenuDO menu : menus) {
             List<RoleDO> roles = roleService.findByMenuId(menu.getId());
@@ -1080,6 +1086,12 @@ public class MySecurityMetadataSource implements FilterInvocationSecurityMetadat
         if (map == null) this.loadDataSource();
         String url = ((FilterInvocation) o).getRequestUrl();
         PathMatcher pathMatcher = new AntPathMatcher();
+        // 白名单中的请求地址，返回空集合
+        for (String ignoreUrl : ignoreUrls.getUrls()) {
+            if (pathMatcher.match(ignoreUrl, url)) {
+                return null;
+            }
+        }
         Iterator<String> iterator = map.keySet().iterator();
         while (iterator.hasNext()) {
             String path = iterator.next();
@@ -1109,13 +1121,20 @@ public class MyAccessDecisionManager implements AccessDecisionManager {
 
     @Override
     public void decide(Authentication authentication, Object o, Collection<ConfigAttribute> collection) throws AccessDeniedException, InsufficientAuthenticationException {
-        // 未设置操作请求权限，返回空集合，则默认放行
-        if (collection == null) return;
+        // 操作请求未被收录或未配置
+        if (collection == null) {
+            return;
+            // throw new AccessDeniedException("抱歉，您没有访问权限");
+        }
         Iterator<ConfigAttribute> iterator = collection.iterator();
         while (iterator.hasNext()) {
             ConfigAttribute c = iterator.next();
             String needRole = c.getAttribute();
             for (GrantedAuthority ga : authentication.getAuthorities()) {
+                // 管理员身份，则默认放行
+                if ("ROLE_ADMIN".equals(ga.getAuthority())) {
+                    return;
+                }
                 if (needRole.trim().equals(ga.getAuthority())) {
                     return;
                 }
@@ -1198,11 +1217,11 @@ public class AuthenticationFailureHandler extends SimpleUrlAuthenticationFailure
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
         if (exception instanceof UsernameNotFoundException || exception instanceof BadCredentialsException) {
-            Response.out(response, Response.failed(ErrorCode.SERVER_EXCEPTION, "账号或密码错误"));
+            Response.out(response, Response.failed(ResultCode.LOGIN_EXPIRED, "账号或密码错误"));
         } else if (exception instanceof DisabledException) {
-            Response.out(response, Response.failed(ErrorCode.SERVER_EXCEPTION, "账号被禁用"));
+            Response.out(response, Response.failed(ResultCode.ACCESS_DENIED, "账号被禁用"));
         } else {
-            Response.out(response, Response.failed(ErrorCode.SERVER_EXCEPTION));
+            Response.out(response, Response.failed(ResultCode.ACCESS_DENIED));
         }
     }
 
@@ -1226,7 +1245,7 @@ public class AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccess
                 .setExpiration(new Date(System.currentTimeMillis() + 60 * 60 * 24 * 1000))
                 .signWith(SignatureAlgorithm.HS512, SecurityConstant.JWT_SIGN_KEY)
                 .compact();
-        Response.out(response, Response.restResult(token, ErrorCode.SUCCESS));
+        Response.out(response, Response.restResult(token, ResultCode.SUCCESS));
     }
 
 }
@@ -1237,7 +1256,7 @@ public class RestAccessDeniedHandler implements AccessDeniedHandler {
 
     @Override
     public void handle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, AccessDeniedException e) throws IOException, ServletException {
-        Response.out(httpServletResponse, Response.failed(ErrorCode.ACCESS_DENIED));
+        Response.out(httpServletResponse, Response.failed(ResultCode.ACCESS_DENIED));
     }
 
 }
@@ -1246,21 +1265,42 @@ public class RestAccessDeniedHandler implements AccessDeniedHandler {
 @Slf4j
 public class JWTAuthenticationFilter extends BasicAuthenticationFilter {
 
-    public JWTAuthenticationFilter(AuthenticationManager authenticationManager) {
+    private String FILTER_URLS;
+    private List<String> IGNORE_URLS;
+
+    public JWTAuthenticationFilter(AuthenticationManager authenticationManager, String filterUrls, List<String> ignoreUrls) {
         super(authenticationManager);
+        this.FILTER_URLS = filterUrls;
+        this.IGNORE_URLS = ignoreUrls;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-        String accessToken = request.getHeader(SecurityConstant.ACCESS_TOKEN);
-        if (StrUtil.isNotBlank(accessToken)) {
-            UsernamePasswordAuthenticationToken authentication = getAuthentication(accessToken, response);
+        String requestURI = request.getRequestURI();
+        PathMatcher pathMatcher = new AntPathMatcher();
+        for (String ignoreUrl : IGNORE_URLS) {
+            if (pathMatcher.match(ignoreUrl, requestURI)) {
+                chain.doFilter(request, response);
+                return;
+            }
+        }
+        if (pathMatcher.match(FILTER_URLS, requestURI)) {
+            String accessToken = request.getHeader(SecurityConstant.ACCESS_TOKEN);
+            if (StrUtil.isBlank(accessToken)) {
+                Response.out(response, Response.failed(ResultCode.LOGIN_EXPIRED));
+                return;
+            }
+            UsernamePasswordAuthenticationToken authentication = getAuthentication(accessToken);
+            if (authentication == null) {
+                Response.out(response, Response.failed(ResultCode.LOGIN_EXPIRED));
+                return;
+            }
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
         chain.doFilter(request, response);
     }
 
-    private UsernamePasswordAuthenticationToken getAuthentication(String accessToken, HttpServletResponse response) {
+    private UsernamePasswordAuthenticationToken getAuthentication(String accessToken) {
         try {
             // JWT解析token
             Claims claims = Jwts.parser()
@@ -1268,17 +1308,27 @@ public class JWTAuthenticationFilter extends BasicAuthenticationFilter {
                     .parseClaimsJws(accessToken.replace(SecurityConstant.TOKEN_PREFIX, ""))
                     .getBody();
             String username = claims.getSubject();
-            if (StrUtil.isNotBlank(username)) {
-                UserDO user = SpringUtil.getBean(UserServiceImpl.class).findByUsername(username);
-                SecurityUserDetails securityUserDetail = new SecurityUserDetails(user);
-                User principal = new User(username, "", securityUserDetail.getAuthorities());
-                return new UsernamePasswordAuthenticationToken(principal, null, securityUserDetail.getAuthorities());
+            // Redis获取用户session
+            UserDO user = SpringUtil.getBean(UserService.class).findByUsername(username);
+            Asserts.notNull(ResultCode.LOGIN_EXPIRED, user);
+            // 验证token是否一致
+            BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+            if (!encoder.matches(accessToken, user.getAccessToken())) {
+                return null;
             }
+            // 验证token是否过期
+            Date expireDate = claims.getExpiration();
+            if (expireDate.before(user.getAccessExpired())) {
+                return null;
+            }
+            // 组装并返回authentication
+            SecurityUserDetails securityUserDetail = new SecurityUserDetails(user);
+            User principal = new User(username, "", securityUserDetail.getAuthorities());
+            return new UsernamePasswordAuthenticationToken(principal, null, securityUserDetail.getAuthorities());
         } catch (ExpiredJwtException e) {
-            Response.failed(ErrorCode.LOGIN_EXPIRED);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            Response.failed(ErrorCode.SERVER_EXCEPTION, "accessToken解析错误");
+            logger.error(e.getMessage(), e);
+        } catch (JwtException e) {
+            logger.error(e.getMessage(), e);
         }
         return null;
     }
@@ -1330,18 +1380,11 @@ public class IgnoreUrlsConfig {
 # ignored-urls
 ignored:
   urls:
-  - /shop/user/expired
-  - /shop/user/insert
-  - /test/**
-  - /druid/**
-  - /swagger-ui.html
-  - /swagger-resources/**
-  - /swagger/**
-  - /**/v2/api-docs
-  - /**/*.js
-  - /**/*.css
-  - /**/*.png
-  - /**/*.ico
+    - /login/expired
+    - /swagger-ui.html
+    - /swagger-resources/**
+    - /swagger/**
+    - /**/v2/api-docs
 ```
 ```
 @Configuration
@@ -1349,15 +1392,17 @@ ignored:
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
-    private UserDetailsServiceImpl userDetailsService;
-    @Autowired
     private IgnoreUrlsConfig ignoreUrlsConfig;
+    @Autowired
+    private UserDetailsServiceImpl userDetailsService;
     @Autowired
     private AuthenticationSuccessHandler authenticationSuccessHandler;
     @Autowired
     private AuthenticationFailureHandler authenticationFailureHandler;
     @Autowired
     private RestAccessDeniedHandler restAccessDeniedHandler;
+    @Autowired
+    private RestLogoutSuccessHandler restLogoutSuccessHandler;
     @Autowired
     private MyFilterSecurityInterceptor myFilterSecurityInterceptor;
 
@@ -1376,15 +1421,17 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         registry.and()
                 // 表单登录方式
                 .formLogin()
-                .loginPage("/shop/user/expired")
-                .loginProcessingUrl("/shop/user/login")
+                .loginPage("/login/expired")
+                .loginProcessingUrl("/back/user/login")
                 .permitAll()
                 .successHandler(authenticationSuccessHandler)
                 .failureHandler(authenticationFailureHandler)
                 // 默认登出方式
                 .and()
                 .logout()
+                .logoutUrl("/back/user/logout")
                 .permitAll()
+                .logoutSuccessHandler(restLogoutSuccessHandler)
                 // 任何请求需要身份认证
                 .and()
                 .authorizeRequests()
@@ -1403,14 +1450,14 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 // 自定义权限拦截器JWT过滤器
                 .and()
                 .addFilterBefore(myFilterSecurityInterceptor, FilterSecurityInterceptor.class)
-                .addFilter(new JWTAuthenticationFilter(authenticationManager()));
+                .addFilter(new JWTAuthenticationFilter(authenticationManager(), "/back/**", ignoreUrlsConfig.getUrls()));
     }
 
 }
 ```
 **解释：**
 最后我们一气呵成，把我们上边做的所有工作，都注入到WebSecurityConfig中，BCryptPasswordEncoder()实现Spring的PasswordEncoder接口使用BCrypt强哈希方法来加密密码，动态加盐每次加密的结果都不同。
-IgnoreUrlsConfig自定义一些不需要鉴权的url，例如我们的文档swagger路径，和默认登录过期地址/shop/user/expired和用户注册地址/shop/user/insert，到此为止我们权限的工作基本已完成，
+IgnoreUrlsConfig自定义一些不需要鉴权的url，例如我们的文档swagger路径和默认登录过期地址/login/expired，到此为止我们权限的工作基本已完成，
 还差登陆后动态菜单，和几个表数据的增删改查，这些就是写个业务，这里不做演示了，怎么样，很酷吧!
 
 ## EasyPoi极简Excel工具整合
@@ -1500,7 +1547,7 @@ public abstract class BaseExcelCtrl<E extends BaseDO, Q extends BaseQuery> exten
     public List<Object> selectListForExcelExport(Object o, int i) {
         Q query = (Q) o;
         Page page = new Page(i, PageModel.MAX_SIZE, false);
-        List<E> list = service.page(page, QueryUtil.buildWrapper(query)).getRecords();
+        List<E> list = service.page(page, QueryUtil.buildWrapper(query, false)).getRecords();
         List<Object> result = new ArrayList<>();
         result.addAll(list);
         return result;
@@ -1516,7 +1563,7 @@ public abstract class BaseExcelCtrl<E extends BaseDO, Q extends BaseQuery> exten
         map.put(BigExcelConstants.DATA_PARAMS, query);
         map.put(BigExcelConstants.DATA_INTER, excelExportServer);
         PoiBaseView.render(map, request, response, BigExcelConstants.EASYPOI_BIG_EXCEL_VIEW);
-        return Response.restResult(null, ErrorCode.SUCCESS);
+        return Response.restResult(null, ResultCode.SUCCESS);
     }
 
 }
