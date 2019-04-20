@@ -16,8 +16,8 @@ ignored:
     - /login/expired
     - /swagger-ui.html
     - /swagger-resources/**
-    - /swagger/**
-    - /**/v2/api-docs
+    - /webjars/**
+    - /v2/api-docs
 
 #logging:
 #  level:
