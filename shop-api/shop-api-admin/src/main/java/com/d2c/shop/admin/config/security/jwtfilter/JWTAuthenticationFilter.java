@@ -89,8 +89,7 @@ public class JWTAuthenticationFilter extends BasicAuthenticationFilter {
                 return null;
             }
             // 验证token是否过期
-            Date expireDate = claims.getExpiration();
-            if (expireDate.before(user.getAccessExpired())) {
+            if (new Date().after(user.getAccessExpired())) {
                 return null;
             }
             // 组装并返回authentication

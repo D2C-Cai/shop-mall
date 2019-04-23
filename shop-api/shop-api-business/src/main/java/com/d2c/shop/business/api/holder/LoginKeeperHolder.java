@@ -45,8 +45,7 @@ public class LoginKeeperHolder {
                 throw new ApiException(ResultCode.LOGIN_EXPIRED);
             }
             // 验证token是否过期
-            Date expireDate = claims.getExpiration();
-            if (expireDate.before(keeper.getAccessExpired())) {
+            if (new Date().after(keeper.getAccessExpired())) {
                 throw new ApiException(ResultCode.LOGIN_EXPIRED);
             }
             return keeper;
