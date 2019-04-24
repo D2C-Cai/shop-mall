@@ -20,7 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author BaiCai
@@ -45,9 +48,35 @@ public class MenuController extends BaseCtrl<MenuDO, MenuQuery> {
         page.setPs(PageModel.MAX_SIZE);
         page.setDesc("sort", "create_date");
         Page<MenuDO> pager = (Page<MenuDO>) menuService.page(page, QueryUtil.buildWrapper(query, false));
-        List<MenuDO> menus = MenuDO.gradeList(pager.getRecords());
+        List<MenuDO> list = pager.getRecords();
+        List<MenuDO> dirs = new ArrayList<>();
+        List<MenuDO> menus = new ArrayList<>();
+        List<MenuDO> buttons = new ArrayList<>();
+        Map<Long, MenuDO> dirMap = new ConcurrentHashMap<>();
+        Map<Long, MenuDO> menuMap = new ConcurrentHashMap<>();
+        for (MenuDO item : list) {
+            if (item.getType().equals(MenuDO.TypeEnum.DIR.name())) {
+                dirs.add(item);
+                dirMap.put(item.getId(), item);
+            } else if (item.getType().equals(MenuDO.TypeEnum.MENU.name())) {
+                menus.add(item);
+                menuMap.put(item.getId(), item);
+            } else if (item.getType().equals(MenuDO.TypeEnum.BUTTON.name())) {
+                buttons.add(item);
+            }
+        }
+        for (MenuDO menu : menus) {
+            if (menu.getParentId() != null && dirMap.get(menu.getParentId()) != null) {
+                dirMap.get(menu.getParentId()).getChildren().add(menu);
+            }
+        }
+        for (MenuDO button : buttons) {
+            if (button.getParentId() != null && menuMap.get(button.getParentId()) != null) {
+                menuMap.get(button.getParentId()).getChildren().add(button);
+            }
+        }
         pager.getRecords().clear();
-        pager.getRecords().addAll(menus);
+        pager.getRecords().addAll(dirs);
         return Response.restResult(pager, ResultCode.SUCCESS);
     }
 
@@ -61,6 +90,7 @@ public class MenuController extends BaseCtrl<MenuDO, MenuQuery> {
         MenuDO old = menuService.getOne(QueryUtil.buildWrapper(query));
         Asserts.isNull("Ant型的路径表达式不能重复", old);
         mySecurityMetadataSource.clearDataSource();
+        mySecurityMetadataSource.loadAllSource();
         return super.insert(entity);
     }
 
@@ -82,6 +112,7 @@ public class MenuController extends BaseCtrl<MenuDO, MenuQuery> {
         List<MenuDO> old = menuService.list(QueryUtil.buildWrapper(query));
         Asserts.ge(1, old.size(), "Ant型的路径表达式不能重复");
         mySecurityMetadataSource.clearDataSource();
+        mySecurityMetadataSource.loadAllSource();
         return super.update(entity);
     }
 
@@ -94,6 +125,7 @@ public class MenuController extends BaseCtrl<MenuDO, MenuQuery> {
         query.setMenuIds(ids);
         roleMenuService.remove(QueryUtil.buildWrapper(query));
         mySecurityMetadataSource.clearDataSource();
+        mySecurityMetadataSource.loadAllSource();
         return super.delete(ids);
     }
 

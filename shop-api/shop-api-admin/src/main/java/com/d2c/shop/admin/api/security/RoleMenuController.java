@@ -1,13 +1,18 @@
 package com.d2c.shop.admin.api.security;
 
 import com.baomidou.mybatisplus.extension.api.R;
+import com.baomidou.mybatisplus.extension.exceptions.ApiException;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.d2c.shop.admin.api.base.BaseCtrl;
 import com.d2c.shop.admin.config.security.authorization.MySecurityMetadataSource;
+import com.d2c.shop.service.common.api.Asserts;
 import com.d2c.shop.service.common.api.PageModel;
+import com.d2c.shop.service.common.api.ResultCode;
 import com.d2c.shop.service.common.utils.QueryUtil;
+import com.d2c.shop.service.modules.security.model.MenuDO;
 import com.d2c.shop.service.modules.security.model.RoleMenuDO;
 import com.d2c.shop.service.modules.security.query.RoleMenuQuery;
+import com.d2c.shop.service.modules.security.service.MenuService;
 import com.d2c.shop.service.modules.security.service.RoleMenuService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -24,6 +29,8 @@ import org.springframework.web.bind.annotation.*;
 public class RoleMenuController extends BaseCtrl<RoleMenuDO, RoleMenuQuery> {
 
     @Autowired
+    private MenuService menuService;
+    @Autowired
     private RoleMenuService roleMenuService;
     @Autowired
     private MySecurityMetadataSource mySecurityMetadataSource;
@@ -33,6 +40,11 @@ public class RoleMenuController extends BaseCtrl<RoleMenuDO, RoleMenuQuery> {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @RequestMapping(value = "/insert", method = RequestMethod.POST)
     public R<RoleMenuDO> insert(@RequestBody RoleMenuDO entity) {
+        MenuDO menu = menuService.getById(entity.getMenuId());
+        Asserts.notNull(ResultCode.RESPONSE_DATA_NULL, menu);
+        if (menu.getType().equals(MenuDO.TypeEnum.DIR.name())) {
+            throw new ApiException("只支持绑定菜单和按钮");
+        }
         RoleMenuQuery query = new RoleMenuQuery();
         query.setRoleId(entity.getRoleId());
         query.setMenuId(entity.getMenuId());

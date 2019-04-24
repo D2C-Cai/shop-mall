@@ -12,8 +12,6 @@ import lombok.EqualsAndHashCode;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author BaiCai
@@ -50,36 +48,6 @@ public class MenuDO extends BaseDO {
     @TableField(exist = false)
     @ApiModelProperty(value = "子级列表")
     private List<MenuDO> children = new ArrayList<>();
-
-    public static List<MenuDO> gradeList(List<MenuDO> list) {
-        List<MenuDO> dirs = new ArrayList<>();
-        List<MenuDO> menus = new ArrayList<>();
-        List<MenuDO> buttons = new ArrayList<>();
-        for (MenuDO item : list) {
-            if (item.getType().equals(TypeEnum.DIR.name())) {
-                dirs.add(item);
-            } else if (item.getType().equals(TypeEnum.MENU.name())) {
-                menus.add(item);
-            } else if (item.getType().equals(TypeEnum.BUTTON.name())) {
-                buttons.add(item);
-            }
-        }
-        Map<Long, MenuDO> dirMap = new ConcurrentHashMap<>();
-        dirs.forEach(item -> dirMap.put(item.getId(), item));
-        Map<Long, MenuDO> menuMap = new ConcurrentHashMap<>();
-        menus.forEach(item -> menuMap.put(item.getId(), item));
-        for (MenuDO menu : menus) {
-            if (menu.getParentId() != null && dirMap.get(menu.getParentId()) != null) {
-                dirMap.get(menu.getParentId()).getChildren().add(menu);
-            }
-        }
-        for (MenuDO button : buttons) {
-            if (button.getParentId() != null && menuMap.get(button.getParentId()) != null) {
-                menuMap.get(button.getParentId()).getChildren().add(button);
-            }
-        }
-        return dirs;
-    }
 
     public enum TypeEnum {
         DIR, MENU, BUTTON
