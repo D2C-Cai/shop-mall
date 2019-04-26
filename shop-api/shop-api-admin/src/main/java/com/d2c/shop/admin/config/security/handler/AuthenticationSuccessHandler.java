@@ -104,7 +104,6 @@ public class AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccess
                     MenuDO parentDir = MySecurityMetadataSource.all.get(parentMenu.getParentId());
                     if (parentDir != null && dirMap.get(parentDir.getId()) == null) {
                         MenuDO temp2 = ObjectUtil.cloneByStream(parentDir);
-                        BeanUtils.copyProperties(parentDir, temp2);
                         dirs.add(temp2);
                         dirMap.put(temp2.getId(), temp2);
                     }
