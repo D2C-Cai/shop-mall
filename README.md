@@ -1317,8 +1317,7 @@ public class JWTAuthenticationFilter extends BasicAuthenticationFilter {
                 return null;
             }
             // 验证token是否过期
-            Date expireDate = claims.getExpiration();
-            if (expireDate.before(user.getAccessExpired())) {
+            if (new Date().after(user.getAccessExpired())) {
                 return null;
             }
             // 组装并返回authentication
@@ -1383,8 +1382,8 @@ ignored:
     - /login/expired
     - /swagger-ui.html
     - /swagger-resources/**
-    - /swagger/**
-    - /**/v2/api-docs
+    - /webjars/**
+    - /v2/api-docs
 ```
 ```
 @Configuration
@@ -1555,15 +1554,18 @@ public abstract class BaseExcelCtrl<E extends BaseDO, Q extends BaseQuery> exten
 
     @ApiOperation(value = "分页导出数据")
     @RequestMapping(value = "/excel/page", method = RequestMethod.GET)
-    public R excelPage(PageModel page, Q query, ModelMap map, HttpServletRequest request,
-                       HttpServletResponse response) {
-        ExportParams params = new ExportParams("excel数据表", "sheet", ExcelType.XSSF);
-        map.put(BigExcelConstants.CLASS, ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0]);
+    public void excelPage(PageModel page, Q query, ModelMap map, HttpServletRequest request,
+                          HttpServletResponse response) {
+        Class class_ = (Class) ((ParameterizedType) this.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+        ApiModel annotation_1 = (ApiModel) class_.getAnnotation(ApiModel.class);
+        TableName annotation_2 = (TableName) class_.getAnnotation(TableName.class);
+        ExportParams params = new ExportParams(annotation_1.value(), annotation_2.value(), ExcelType.XSSF);
+        map.put(BigExcelConstants.CLASS, class_);
         map.put(BigExcelConstants.PARAMS, params);
+        map.put(BigExcelConstants.FILE_NAME, annotation_2.value());
         map.put(BigExcelConstants.DATA_PARAMS, query);
         map.put(BigExcelConstants.DATA_INTER, excelExportServer);
         PoiBaseView.render(map, request, response, BigExcelConstants.EASYPOI_BIG_EXCEL_VIEW);
-        return Response.restResult(null, ResultCode.SUCCESS);
     }
 
 }
