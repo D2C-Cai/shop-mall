@@ -7,6 +7,8 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.Date;
+
 /**
  * @author BaiCai
  */
@@ -14,6 +16,9 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = false)
 public class OrderQuery extends BaseQuery {
 
+    @Condition(condition = ConditionEnum.LE, field = "expire_date")
+    @ApiModelProperty(value = "过期时间止")
+    public Date expireDateR;
     @Condition(condition = ConditionEnum.EQ)
     @ApiModelProperty(value = "店铺ID")
     private Long shopId;

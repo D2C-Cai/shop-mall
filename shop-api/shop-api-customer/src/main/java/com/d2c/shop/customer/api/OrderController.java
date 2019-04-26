@@ -445,10 +445,6 @@ public class OrderController extends BaseController {
         Asserts.eq(order.getStatus(), OrderDO.StatusEnum.WAIT_PAY.name(), "订单状态异常");
         MemberDO member = loginMemberHolder.getLoginMember();
         Asserts.eq(order.getMemberId(), member.getId(), "订单不属于本人");
-        OrderItemQuery itemQuery = new OrderItemQuery();
-        itemQuery.setOrderSn(new String[]{order.getSn()});
-        List<OrderItemDO> orderItemList = orderItemService.list(QueryUtil.buildWrapper(itemQuery));
-        order.setOrderItemList(orderItemList);
         orderService.doClose(order);
         return Response.restResult(null, ResultCode.SUCCESS);
     }

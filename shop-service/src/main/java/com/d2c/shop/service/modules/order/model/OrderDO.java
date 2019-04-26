@@ -16,6 +16,7 @@ import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -62,6 +63,9 @@ public class OrderDO extends BaseDelDO implements IAddress {
     @Assert(type = AssertEnum.NOT_NULL)
     @ApiModelProperty(value = "状态")
     private String status;
+    @Assert(type = AssertEnum.NOT_NULL)
+    @ApiModelProperty(value = "过期时间")
+    private Date expireDate;
     @Assert(type = AssertEnum.NOT_NULL)
     @ApiModelProperty(value = "商品总价")
     private BigDecimal productAmount;

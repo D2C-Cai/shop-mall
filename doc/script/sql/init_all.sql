@@ -377,6 +377,7 @@ CREATE TABLE `O_ORDER`  (
   `sn` varchar(180) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '订单号',
   `type` varchar(60) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '类型',
   `status` varchar(60) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '状态',
+  `expire_date` datetime(0) NULL DEFAULT NULL COMMENT '过期时间',
   `product_amount` decimal(16, 2) NULL DEFAULT NULL COMMENT '商品总价',
   `coupon_id` bigint(20) NULL DEFAULT NULL COMMENT '优惠券ID',
   `coupon_amount` decimal(16, 2) NULL DEFAULT NULL COMMENT '优惠券折减',

@@ -6,10 +6,7 @@ import com.d2c.shop.service.config.RabbitmqConfig;
 import com.d2c.shop.service.modules.logger.nosql.elasticsearch.document.MqErrorLog;
 import com.d2c.shop.service.modules.logger.nosql.elasticsearch.repository.MqErrorLogRepository;
 import com.d2c.shop.service.modules.order.model.OrderDO;
-import com.d2c.shop.service.modules.order.model.OrderItemDO;
-import com.d2c.shop.service.modules.order.query.OrderItemQuery;
 import com.d2c.shop.service.modules.order.query.OrderQuery;
-import com.d2c.shop.service.modules.order.service.OrderItemService;
 import com.d2c.shop.service.modules.order.service.OrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitHandler;
@@ -19,7 +16,6 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.Date;
-import java.util.List;
 
 /**
  * @author Cai
@@ -31,8 +27,6 @@ public class OrderDelayedReceiver {
 
     @Autowired
     private OrderService orderService;
-    @Autowired
-    private OrderItemService orderItemService;
     @Autowired
     private MqErrorLogRepository mqErrorLogRepository;
 
@@ -58,10 +52,6 @@ public class OrderDelayedReceiver {
         query.setSn(msg);
         OrderDO order = orderService.getOne(QueryUtil.buildWrapper(query));
         if (order != null && order.getStatus().equals(OrderDO.StatusEnum.WAIT_PAY.name())) {
-            OrderItemQuery itemQuery = new OrderItemQuery();
-            itemQuery.setOrderSn(new String[]{order.getSn()});
-            List<OrderItemDO> orderItemList = orderItemService.list(QueryUtil.buildWrapper(itemQuery));
-            order.setOrderItemList(orderItemList);
             orderService.doClose(order);
         }
     }
