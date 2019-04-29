@@ -13,6 +13,7 @@ spring:
 # ignored-urls
 ignored:
   urls:
+    - /download/**
     - /login/expired
     - /swagger-ui.html
     - /swagger-resources/**
