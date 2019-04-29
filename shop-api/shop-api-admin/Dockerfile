@@ -1,6 +1,7 @@
-FROM openjdk:8-jdk-alpine
+FROM openjdk:8-jre
 VOLUME /tmp
 RUN echo "Asia/Shanghai" > /etc/timezone
+RUN apt-get install -y libfontconfig
 #ADD target/shop-api-admin.jar /run/shop-api-admin.jar
 ENV PROFILE ""
 ENV PASSWORD ""
