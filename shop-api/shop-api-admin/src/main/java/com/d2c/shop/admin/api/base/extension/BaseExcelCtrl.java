@@ -69,7 +69,7 @@ public abstract class BaseExcelCtrl<E extends BaseDO, Q extends BaseQuery> exten
     }
 
     protected static R renderExcel(Map<String, Object> model) throws Exception {
-        String codedFileName = model.get(BigExcelConstants.FILE_NAME) + ".xls";
+        String codedFileName = model.get(BigExcelConstants.FILE_NAME) + "_" + DateUtil.currentSeconds() + ".xls";
         Workbook workbook = ExcelExportUtil.exportBigExcel((ExportParams) model.get(BigExcelConstants.PARAMS), (Class) model.get(BigExcelConstants.CLASS), Collections.EMPTY_LIST);
         IExcelExportServer server = (IExcelExportServer) model.get(BigExcelConstants.DATA_INTER);
         int page = 1;
