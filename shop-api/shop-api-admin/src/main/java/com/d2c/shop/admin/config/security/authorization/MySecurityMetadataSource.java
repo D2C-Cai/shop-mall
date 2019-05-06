@@ -17,7 +17,6 @@ import org.springframework.util.PathMatcher;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author BaiCai
@@ -25,10 +24,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class MySecurityMetadataSource implements FilterInvocationSecurityMetadataSource {
 
-    /**
-     * 内存中存储：所有Ant路径
-     */
-    public static Map<Long, MenuDO> all = null;
     /**
      * 内存中存储：每个Ant路径对应权限集合
      */
@@ -40,13 +35,6 @@ public class MySecurityMetadataSource implements FilterInvocationSecurityMetadat
     private RoleService roleService;
     @Autowired
     private IgnoreUrlsConfig ignoreUrls;
-
-    @PostConstruct
-    public void loadAllSource() {
-        List<MenuDO> list = menuService.list();
-        all = new ConcurrentHashMap<>();
-        list.forEach(item -> all.put(item.getId(), item));
-    }
 
     @PostConstruct
     public void loadDataSource() {

@@ -90,7 +90,6 @@ public class MenuController extends BaseCtrl<MenuDO, MenuQuery> {
         MenuDO old = menuService.getOne(QueryUtil.buildWrapper(query));
         Asserts.isNull("Ant型的路径表达式不能重复", old);
         mySecurityMetadataSource.clearDataSource();
-        mySecurityMetadataSource.loadAllSource();
         return super.insert(entity);
     }
 
@@ -112,7 +111,6 @@ public class MenuController extends BaseCtrl<MenuDO, MenuQuery> {
         List<MenuDO> old = menuService.list(QueryUtil.buildWrapper(query));
         Asserts.ge(1, old.size(), "Ant型的路径表达式不能重复");
         mySecurityMetadataSource.clearDataSource();
-        mySecurityMetadataSource.loadAllSource();
         return super.update(entity);
     }
 
@@ -125,7 +123,6 @@ public class MenuController extends BaseCtrl<MenuDO, MenuQuery> {
         query.setMenuIds(ids);
         roleMenuService.remove(QueryUtil.buildWrapper(query));
         mySecurityMetadataSource.clearDataSource();
-        mySecurityMetadataSource.loadAllSource();
         return super.delete(ids);
     }
 
