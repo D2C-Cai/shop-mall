@@ -58,7 +58,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Cai
@@ -161,9 +160,9 @@ public class OrderController extends BaseController {
         MemberDO member = loginMemberHolder.getLoginMember();
         // 防止重复提交
         try {
-            Object doing = redisTemplate.opsForValue().get("C_CREATE_ORDER::" + member.getAccount());
-            Asserts.isNull("您尚有正在处理中的订单，请勿重复操作", doing);
-            redisTemplate.opsForValue().set("C_CREATE_ORDER::" + member.getAccount(), 1, 1, TimeUnit.MINUTES);
+            if (!redisTemplate.opsForValue().setIfAbsent("C_CREATE_ORDER::" + member.getAccount(), 1)) {
+                throw new ApiException("您尚有正在处理中的订单，请勿重复操作");
+            }
             // 收货地址
             AddressDO address = addressService.getById(addressId);
             Asserts.notNull("收货地址不能为空", address);
