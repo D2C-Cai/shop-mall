@@ -38,6 +38,8 @@ public class QuartzInitializer implements ServletContextListener {
                 if (scheduler.getJobDetail(new JobKey(job.getClass().getName())) == null) {
                     quartzHandler.insert(job.getClass().getName(), job.getCronExpression());
                 }
+                // 启动时执行一次
+                job.execute(null);
             } catch (SchedulerException e) {
                 log.error(e.getMessage(), e);
             }
