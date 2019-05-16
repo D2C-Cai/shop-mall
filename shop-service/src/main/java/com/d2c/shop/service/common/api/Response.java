@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.api.R;
 import io.swagger.annotations.ApiModel;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.servlet.ServletOutputStream;
 import javax.servlet.ServletResponse;
 import java.io.PrintWriter;
 
@@ -23,19 +24,16 @@ public final class Response<T> extends R<T> {
     }
 
     public static void out(ServletResponse response, R result) {
-        PrintWriter out = null;
+        ServletOutputStream os;
         try {
             response.setCharacterEncoding("UTF-8");
             response.setContentType("application/json");
-            out = response.getWriter();
-            out.println(JSONUtil.parse(result).toJSONString(0));
+            os = response.getOutputStream();
+            String str = JSONUtil.parse(result).toJSONString(0);
+            os.write(str.getBytes("UTF-8"));
+            os.close();
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-        } finally {
-            if (out != null) {
-                out.flush();
-                out.close();
-            }
         }
     }
 
