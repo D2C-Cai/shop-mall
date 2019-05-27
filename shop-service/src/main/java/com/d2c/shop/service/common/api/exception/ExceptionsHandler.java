@@ -1,6 +1,5 @@
 package com.d2c.shop.service.common.api.exception;
 
-import com.baomidou.mybatisplus.core.exceptions.MybatisPlusException;
 import com.baomidou.mybatisplus.extension.api.R;
 import com.baomidou.mybatisplus.extension.exceptions.ApiException;
 import com.d2c.shop.service.common.api.Response;
@@ -28,16 +27,13 @@ public class ExceptionsHandler {
     @ResponseBody
     @ExceptionHandler(value = RuntimeException.class)
     public R handle(RuntimeException e) {
+        log.error(this.buildError(e.getMessage()));
         if (e instanceof ApiException) {
-            log.error(this.buildError(e.getMessage()));
             ApiException ex = (ApiException) e;
             if (ex.getErrorCode() == null) {
                 return Response.failed(ResultCode.FAILED, e.getMessage());
             }
             return Response.failed(ex.getErrorCode());
-        } else if (e instanceof MybatisPlusException) {
-            MybatisPlusException ex = (MybatisPlusException) e;
-            return Response.failed(ResultCode.SERVER_EXCEPTION, e.getMessage());
         }
         e.printStackTrace();
         return Response.failed(ResultCode.SERVER_EXCEPTION, e.getMessage());

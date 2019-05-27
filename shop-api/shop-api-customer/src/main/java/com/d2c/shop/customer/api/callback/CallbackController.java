@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
@@ -64,8 +65,7 @@ public class CallbackController extends BaseController {
                         }
                     }
             );
-            response.getWriter().write(successXML("SUCCESS", "OK"));
-            response.getWriter().flush();
+            this.writeResponseResult(response, successXML("SUCCESS", "OK"));
         }
         return Response.restResult(null, ResultCode.RESPONSE_DATA_NULL);
     }
@@ -82,6 +82,18 @@ public class CallbackController extends BaseController {
         inStream.close();
         String requestXml = new String(outSteam.toByteArray(), "utf-8");
         return requestXml;
+    }
+
+    private void writeResponseResult(HttpServletResponse response, String result) {
+        ServletOutputStream os;
+        try {
+            response.setCharacterEncoding("UTF-8");
+            os = response.getOutputStream();
+            os.write(result.getBytes("UTF-8"));
+            os.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private String successXML(String return_code, String return_msg) {
@@ -107,8 +119,7 @@ public class CallbackController extends BaseController {
                         }
                     }
             );
-            response.getWriter().write("success");
-            response.getWriter().flush();
+            this.writeResponseResult(response, "success");
         }
         return Response.restResult(null, ResultCode.RESPONSE_DATA_NULL);
     }
