@@ -83,7 +83,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .accessDeniedHandler(restAccessDeniedHandler)
                 // 自定义权限拦截器JWT过滤器
                 .and()
-                .addFilterBefore(myFilterSecurityInterceptor, FilterSecurityInterceptor.class)
                 .addFilter(new JWTAuthenticationFilter(authenticationManager(), "/back/**", ignoreUrlsConfig.getUrls()));
     }
 
