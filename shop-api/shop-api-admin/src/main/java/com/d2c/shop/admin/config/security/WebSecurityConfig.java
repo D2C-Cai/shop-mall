@@ -1,7 +1,6 @@
 package com.d2c.shop.admin.config.security;
 
 import com.d2c.shop.admin.config.security.authentication.UserDetailsServiceImpl;
-import com.d2c.shop.admin.config.security.authorization.MyFilterSecurityInterceptor;
 import com.d2c.shop.admin.config.security.handler.RestAccessDeniedHandler;
 import com.d2c.shop.admin.config.security.handler.RestLogoutSuccessHandler;
 import com.d2c.shop.admin.config.security.jwtfilter.JWTAuthenticationFilter;
@@ -14,7 +13,6 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
@@ -37,8 +35,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private RestAccessDeniedHandler restAccessDeniedHandler;
     @Autowired
     private RestLogoutSuccessHandler restLogoutSuccessHandler;
-    @Autowired
-    private MyFilterSecurityInterceptor myFilterSecurityInterceptor;
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
