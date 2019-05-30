@@ -1,11 +1,9 @@
 package com.d2c.shop.admin.config.security.authorization;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.SecurityMetadataSource;
 import org.springframework.security.access.intercept.AbstractSecurityInterceptor;
 import org.springframework.security.access.intercept.InterceptorStatusToken;
 import org.springframework.security.web.FilterInvocation;
-import org.springframework.stereotype.Component;
 
 import javax.servlet.*;
 import java.io.IOException;
@@ -13,15 +11,13 @@ import java.io.IOException;
 /**
  * @author BaiCai
  */
-@Component
 public class MyFilterSecurityInterceptor extends AbstractSecurityInterceptor implements Filter {
 
-    @Autowired
-    private MySecurityMetadataSource securityMetadataSource;
+    private MySecurityMetadataSource mySecurityMetadataSource;
 
-    @Autowired
-    public void setMyAccessDecisionManager(MyAccessDecisionManager myAccessDecisionManager) {
-        super.setAccessDecisionManager(myAccessDecisionManager);
+    public MyFilterSecurityInterceptor(MySecurityMetadataSource securityMetadataSource, MyAccessDecisionManager accessDecisionManager) {
+        this.mySecurityMetadataSource = securityMetadataSource;
+        super.setAccessDecisionManager(accessDecisionManager);
     }
 
     @Override
@@ -50,7 +46,7 @@ public class MyFilterSecurityInterceptor extends AbstractSecurityInterceptor imp
 
     @Override
     public SecurityMetadataSource obtainSecurityMetadataSource() {
-        return securityMetadataSource;
+        return this.mySecurityMetadataSource;
     }
 
 }

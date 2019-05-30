@@ -1,6 +1,9 @@
 package com.d2c.shop.admin.config.security;
 
 import com.d2c.shop.admin.config.security.authentication.UserDetailsServiceImpl;
+import com.d2c.shop.admin.config.security.authorization.MyAccessDecisionManager;
+import com.d2c.shop.admin.config.security.authorization.MyFilterSecurityInterceptor;
+import com.d2c.shop.admin.config.security.authorization.MySecurityMetadataSource;
 import com.d2c.shop.admin.config.security.handler.RestAccessDeniedHandler;
 import com.d2c.shop.admin.config.security.handler.RestLogoutSuccessHandler;
 import com.d2c.shop.admin.config.security.jwtfilter.JWTAuthenticationFilter;
@@ -13,6 +16,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
@@ -27,6 +31,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private IgnoreUrlsConfig ignoreUrlsConfig;
     @Autowired
     private UserDetailsServiceImpl userDetailsService;
+    @Autowired
+    private MySecurityMetadataSource mySecurityMetadataSource;
+    @Autowired
+    private MyAccessDecisionManager myAccessDecisionManager;
     @Autowired
     private AuthenticationSuccessHandler authenticationSuccessHandler;
     @Autowired
@@ -79,6 +87,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .accessDeniedHandler(restAccessDeniedHandler)
                 // 自定义权限拦截器JWT过滤器
                 .and()
+                .addFilterBefore(new MyFilterSecurityInterceptor(mySecurityMetadataSource, myAccessDecisionManager), FilterSecurityInterceptor.class)
                 .addFilter(new JWTAuthenticationFilter(authenticationManager(), "/back/**", ignoreUrlsConfig.getUrls()));
     }
 
